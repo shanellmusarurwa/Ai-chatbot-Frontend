@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background: linear-gradient(135deg, #4158d0 0%, #c850c0 46%, #ffcc70 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Small centered container */
+  .liquid-glass-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 600px;
+    padding: 2.5rem;
+    margin: 0 auto;
+  }
+
+  /* Centered header text */
+  .centered-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .centered-header h1 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: white;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+  }
+
+  .centered-header p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 300;
+  }
+
+  /* Input container - pill shape */
+  .glass-input-container {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 60px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  .glass-input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    outline: none;
+  }
+
+  .glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 300;
+  }
+
+  /* Button row  */
+  .button-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .mt-6 {
+    margin-top: 1.5rem;
+  }
+
+  .mb-2 {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Pill-shaped buttons */
+  .pill-button {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 40px;
+    padding: 0.5rem 1.5rem;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 400;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .pill-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .pill-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Deep search button with arrow */
+  .deep-search-button {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 40px;
+    padding: 0.5rem 1.5rem;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .deep-search-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  /* Messages container - below input, centered */
+  .messages-container {
+    margin-top: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+
+  .deep-search-options {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Message bubbles - minimal, centered */
+  .message-bubble {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 20px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .user-message {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .assistant-message {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .message-time {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0.25rem;
+  }
+
+  .message-content {
+    color: white;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  /* Error message */
+  .error-message {
+    background: rgba(255, 100, 100, 0.2);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    border-radius: 20px;
+    padding: 1rem;
+    color: white;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  /* Hide attribution */
+  .hidden {
+    display: none;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
