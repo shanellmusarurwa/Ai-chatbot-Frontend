@@ -55,11 +55,10 @@ const ChatInterface = () => {
       isStreaming: true,
     });
 
-    try {
-      abortControllerRef.current = new AbortController();
+    abortControllerRef.current = new AbortController();
 
-      const useStreaming =
-        process.env.NEXT_PUBLIC_AGENT_URL?.includes("stream");
+    try {
+      const useStreaming = false; // true for streaming, false for invoke
 
       if (useStreaming) {
         await handleStreamingResponse(userMessage.content);
@@ -70,10 +69,9 @@ const ChatInterface = () => {
       if (error.name === "AbortError") {
         console.log("Request aborted");
       } else {
-        console.error("Error sending message:", error);
-        setError("Failed to get response. Please try again.");
+        console.error("API failed, using fallback:", error);
         updateLastMessage(
-          "Sorry, I encountered an error. Please try again.",
+          `This is a fallback mock response. You asked: "${userMessage.content}"`,
           false,
         );
       }
@@ -84,20 +82,27 @@ const ChatInterface = () => {
     }
   };
 
+  // ✅ STREAMING HANDLER
   const handleStreamingResponse = async (userMessage) => {
     setStreaming(true);
 
-    const response = await fetch(process.env.NEXT_PUBLIC_AGENT_URL, {
+    const STREAM_URL =
+      process.env.NEXT_PUBLIC_AGENT_STREAM_URL ||
+      "https://ai4d.wiremockapi.cloud/agent/stream";
+
+    console.log("Streaming URL:", STREAM_URL);
+
+    const response = await fetch(STREAM_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ input: userMessage }),
-      signal: abortControllerRef.current?.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: userMessage }],
+      }),
+      signal: abortControllerRef.current.signal,
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error: ${response.status}`);
     }
 
     const reader = response.body.getReader();
@@ -114,13 +119,13 @@ const ChatInterface = () => {
       for (const line of lines) {
         if (line.startsWith("data: ")) {
           try {
-            const data = JSON.parse(line.slice(5));
-            if (data.content) {
-              accumulatedContent += data.content;
+            const json = JSON.parse(line.replace("data: ", "").trim());
+            if (json.content) {
+              accumulatedContent += json.content;
               updateLastMessage(accumulatedContent, true);
             }
-          } catch (e) {
-            console.error("Error parsing chunk:", e);
+          } catch (err) {
+            console.error("Stream parse error:", err);
           }
         }
       }
@@ -129,33 +134,56 @@ const ChatInterface = () => {
     updateLastMessage(accumulatedContent, false);
   };
 
+  // ✅ STANDARD INVOKE HANDLER
   const handleStandardResponse = async (userMessage) => {
-    const response = await fetch(process.env.NEXT_PUBLIC_AGENT_INVOKE_URL, {
+    const INVOKE_URL =
+      process.env.NEXT_PUBLIC_AGENT_INVOKE_URL ||
+      "https://ai4d.wiremockapi.cloud/agent/invoke";
+
+    console.log("Invoke URL:", INVOKE_URL);
+
+    const response = await fetch(INVOKE_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ input: userMessage }),
-      signal: abortControllerRef.current?.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: userMessage }],
+      }),
+      signal: abortControllerRef.current.signal,
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error: ${response.status}`);
     }
 
     const data = await response.json();
-    updateLastMessage(data.output || "No response from agent", false);
+    console.log("Invoke response full:", data);
+
+    // Extract AI message safely
+    let assistantText = "No response from agent";
+    const messages = data.output?.messages;
+    if (Array.isArray(messages)) {
+      const aiMessage = messages.find((m) => m.type === "ai");
+      if (aiMessage) {
+        if (typeof aiMessage.content === "string") {
+          assistantText = aiMessage.content;
+        } else if (typeof aiMessage.content === "object") {
+          assistantText =
+            aiMessage.content.text ||
+            JSON.stringify(aiMessage.content, null, 2);
+        }
+      }
+    }
+
+    updateLastMessage(assistantText, false);
   };
 
   return (
     <div className="liquid-glass-container">
-      {/* Centered Header - exactly like image 2 */}
       <div className="centered-header">
         <h1>Hi, I&apos;m Micci.</h1>
         <p>How can I help you today?</p>
       </div>
 
-      {/* Input Area */}
       <form onSubmit={handleSubmit}>
         <div className="glass-input-container">
           <input
@@ -170,14 +198,13 @@ const ChatInterface = () => {
           />
         </div>
 
-        {/* Button Row - Deep Search and Search buttons side by side */}
         <div className="button-row">
           <button
             type="button"
             className="deep-search-button"
             onClick={() => setShowDeepSearch(!showDeepSearch)}
           >
-            <span>Deep search</span>
+            Deep search
           </button>
 
           <button
@@ -190,7 +217,6 @@ const ChatInterface = () => {
         </div>
       </form>
 
-      {/* Deep Search Options - with proper spacing to avoid overlap */}
       {showDeepSearch && (
         <div className="mt-6 mb-2">
           <div className="message-bubble">
@@ -201,7 +227,6 @@ const ChatInterface = () => {
         </div>
       )}
 
-      {/* Messages Container - below input, centered */}
       {state.messages.length > 0 && (
         <div className="mt-6 messages-container">
           {state.messages.map((message) => (
@@ -212,49 +237,28 @@ const ChatInterface = () => {
               }`}
             >
               <div className="message-time">
-                {new Date(message.timestamp).toLocaleTimeString("en-US", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
+                {new Date(message.timestamp).toLocaleTimeString()}
               </div>
+
               <div className="message-content">
                 {message.content}
                 {message.isStreaming && (
                   <span className="inline-flex ml-2">
                     <span className="animate-pulse">.</span>
-                    <span className="animate-pulse animation-delay-200">.</span>
-                    <span className="animate-pulse animation-delay-400">.</span>
+                    <span className="animate-pulse">.</span>
+                    <span className="animate-pulse">.</span>
                   </span>
                 )}
               </div>
             </div>
           ))}
 
-          {/* Loading indicator */}
-          {state.isLoading && !state.isStreaming && (
-            <div className="message-bubble assistant-message">
-              <div className="message-content">
-                Thinking
-                <span className="inline-flex ml-2">
-                  <span className="animate-pulse">.</span>
-                  <span className="animate-pulse animation-delay-200">.</span>
-                  <span className="animate-pulse animation-delay-400">.</span>
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Error message */}
           {state.error && (
             <div className="error-message">
-              <button
-                onClick={clearError}
-                className="absolute top-2 right-2 text-white/50 hover:text-white"
-              >
+              <button onClick={clearError} className="absolute top-2 right-2">
                 ✕
               </button>
-              <div className="text-sm message-content">{state.error}</div>
+              <div className="text-sm">{state.error}</div>
             </div>
           )}
 
@@ -262,12 +266,8 @@ const ChatInterface = () => {
         </div>
       )}
 
-      {/* Abort button when streaming */}
       {state.isStreaming && (
-        <button
-          onClick={abortGeneration}
-          className="w-full mt-6 text-center pill-button"
-        >
+        <button onClick={abortGeneration} className="w-full mt-6 pill-button">
           Stop Generating
         </button>
       )}
